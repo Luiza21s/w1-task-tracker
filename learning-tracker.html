@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Трекер обучения</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: #fafafa;
+      color: #1a1a1a;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 32px;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: -0.5px;
+    }
+
+    .current-week-badge {
+      padding: 8px 16px;
+      background: #1a1a1a;
+      color: #fff;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .view-toggle {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .view-btn {
+      padding: 10px 20px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      background: #fff;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .view-btn:hover {
+      border-color: #1a1a1a;
+    }
+
+    .view-btn.active {
+      background: #1a1a1a;
+      color: #fff;
+      border-color: #1a1a1a;
+    }
+
+    .add-form {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .add-form input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+      background: #fff;
+      transition: border-color 0.2s;
+    }
+
+    .add-form input:focus {
+      outline: none;
+      border-color: #1a1a1a;
+    }
+
+    .add-form select {
+      padding: 12px 16px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+      background: #fff;
+      cursor: pointer;
+      min-width: 120px;
+    }
+
+    .add-form select:focus {
+      outline: none;
+      border-color: #1a1a1a;
+    }
+
+    .add-form button {
+      padding: 12px 24px;
+      background: #1a1a1a;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .add-form button:hover {
+      background: #333;
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 24px;
+      padding-left: 4px;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #666;
+      cursor: pointer;
+    }
+
+    .checkbox-label input {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    .filters {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .filter-btn {
+      padding: 8px 16px;
+      border: 1px solid #e0e0e0;
+      border-radius: 20px;
+      background: #fff;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .filter-btn:hover {
+      border-color: #1a1a1a;
+    }
+
+    .filter-btn.active {
+      background: #1a1a1a;
+      color: #fff;
+      border-color: #1a1a1a;
+    }
+
+    .add-week-btn {
+      padding: 8px 12px;
+      border: 1px dashed #ccc;
+      border-radius: 20px;
+      background: transparent;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: #666;
+    }
+
+    .add-week-btn:hover {
+      border-color: #1a1a1a;
+      color: #1a1a1a;
+    }
+
+    .weeks-container {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* Week card styles */
+    .week-card {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 16px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .week-card:hover {
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    .week-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      background: #f8f8f8;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .week-header:hover {
+      background: #f0f0f0;
+    }
+
+    .week-title {
+      font-size: 15px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .week-title .arrow {
+      transition: transform 0.3s ease;
+      font-size: 12px;
+      color: #666;
+    }
+
+    .week-card.collapsed .week-title .arrow {
+      transform: rotate(-90deg);
+    }
+
+    .week-progress {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .progress-bar {
+      width: 100px;
+      height: 6px;
+      background: #e0e0e0;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: #22c55e;
+      border-radius: 3px;
+      transition: width 0.3s ease;
+    }
+
+    .progress-text {
+      font-size: 12px;
+      color: #666;
+      min-width: 60px;
+      text-align: right;
+    }
+
+    .week-tasks {
+      max-height: 2000px;
+      overflow: hidden;
+      transition: max-height 0.4s ease, padding 0.3s ease;
+      padding: 0;
+    }
+
+    .week-card.collapsed .week-tasks {
+      max-height: 0;
+      padding: 0;
+    }
+
+    .week-tasks.has-tasks {
+      padding: 8px 0;
+    }
+
+    .task-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 20px;
+      transition: all 0.3s ease;
+      cursor: grab;
+      position: relative;
+      max-height: 52px;
+      overflow: hidden;
+    }
+
+    .task-item:active {
+      cursor: grabbing;
+    }
+
+    .task-item:hover {
+      background: #fafafa;
+      max-height: 200px;
+    }
+
+    .task-item.dragging {
+      opacity: 0.5;
+      background: #f5f5f5;
+    }
+
+    .task-item.drag-over {
+      background: #f0f0f0;
+    }
+
+    .task-item.drag-over::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 20px;
+      right: 20px;
+      height: 2px;
+      background: #1a1a1a;
+    }
+
+    .task-item.done {
+      opacity: 0.6;
+    }
+
+    .task-item.done .task-name {
+      text-decoration: line-through;
+      color: #888;
+    }
+
+    .task-item.bonus {
+      background: linear-gradient(90deg, #fffbeb 0%, transparent 100%);
+    }
+
+    .task-item.bonus:hover {
+      background: linear-gradient(90deg, #fef3c7 0%, #fafafa 100%);
+    }
+
+    .task-item.current-step {
+      background: linear-gradient(90deg, #f0fdf4 0%, transparent 100%);
+      border-left: 3px solid #22c55e;
+      padding-left: 17px;
+    }
+
+    .task-item.current-step:hover {
+      background: linear-gradient(90deg, #dcfce7 0%, #fafafa 100%);
+    }
+
+    .task-checkbox {
+      width: 20px;
+      height: 20px;
+      border: 2px solid #ccc;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .task-checkbox:hover {
+      border-color: #1a1a1a;
+    }
+
+    .task-checkbox.checked {
+      background: #1a1a1a;
+      border-color: #1a1a1a;
+    }
+
+    .task-checkbox.checked::after {
+      content: '\2713';
+      color: #fff;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .task-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .task-name {
+      font-size: 14px;
+      line-height: 1.5;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: all 0.3s ease;
+    }
+
+    .task-item:hover .task-name {
+      white-space: normal;
+      overflow: visible;
+    }
+
+    .task-badges {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .task-item:hover .task-badges {
+      opacity: 1;
+    }
+
+    .bonus-badge {
+      font-size: 11px;
+      color: #b45309;
+      background: #fef3c7;
+      padding: 2px 8px;
+      border-radius: 10px;
+      white-space: nowrap;
+      font-weight: 500;
+    }
+
+    .step-indicator {
+      font-size: 11px;
+      color: #16a34a;
+      background: #dcfce7;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-left: 8px;
+      white-space: nowrap;
+    }
+
+    .task-actions {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .task-item:hover .task-actions {
+      opacity: 1;
+    }
+
+    .task-btn {
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: transparent;
+      color: #999;
+      cursor: pointer;
+      border-radius: 4px;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .task-btn:hover {
+      background: #f0f0f0;
+      color: #1a1a1a;
+    }
+
+    .task-btn.delete:hover {
+      background: #fee;
+      color: #e53935;
+    }
+
+    .drag-handle {
+      color: #ccc;
+      cursor: grab;
+      font-size: 14px;
+      padding: 0 4px;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .task-item:hover .drag-handle {
+      opacity: 1;
+    }
+
+    .drag-handle:active {
+      cursor: grabbing;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 48px 20px;
+      color: #888;
+      font-size: 14px;
+    }
+
+    .stats {
+      margin-top: 24px;
+      padding-top: 24px;
+      border-top: 1px solid #e0e0e0;
+      font-size: 13px;
+      color: #666;
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .week-settings {
+      margin-top: 32px;
+      padding: 20px;
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+    }
+
+    .week-settings h3 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    .settings-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .settings-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .settings-row label {
+      font-size: 13px;
+      color: #666;
+      min-width: 140px;
+    }
+
+    .settings-row select {
+      padding: 8px 12px;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 13px;
+      background: #fff;
+    }
+
+    /* Edit modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal {
+      background: #fff;
+      border-radius: 16px;
+      padding: 28px;
+      width: 90%;
+      max-width: 480px;
+    }
+
+    .modal h3 {
+      font-size: 18px;
+      margin-bottom: 24px;
+    }
+
+    .modal-field {
+      margin-bottom: 20px;
+    }
+
+    .modal-field label {
+      display: block;
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 8px;
+    }
+
+    .modal-field input,
+    .modal-field select,
+    .modal-field textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    .modal-field textarea {
+      min-height: 120px;
+      resize: vertical;
+      line-height: 1.5;
+    }
+
+    .modal-field input:focus,
+    .modal-field select:focus,
+    .modal-field textarea:focus {
+      outline: none;
+      border-color: #1a1a1a;
+    }
+
+    .modal-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #666;
+      cursor: pointer;
+      margin-bottom: 8px;
+    }
+
+    .modal-checkbox input {
+      width: 16px;
+      height: 16px;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-top: 28px;
+    }
+
+    .modal-btn {
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .modal-btn.cancel {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      color: #666;
+    }
+
+    .modal-btn.cancel:hover {
+      border-color: #1a1a1a;
+      color: #1a1a1a;
+    }
+
+    .modal-btn.save {
+      background: #1a1a1a;
+      border: none;
+      color: #fff;
+    }
+
+    .modal-btn.save:hover {
+      background: #333;
+    }
+
+    @media (max-width: 500px) {
+      .add-form {
+        flex-direction: column;
+      }
+      
+      .add-form select {
+        min-width: 100%;
+      }
+
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .checkbox-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .week-progress {
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 4px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Трекер обучения</h1>
+      <div class="current-week-badge" id="currentWeekBadge">Неделя 1</div>
+    </header>
+
+    <div class="view-toggle">
+      <button class="view-btn active" data-view="today">Текущие задачи</button>
+      <button class="view-btn" data-view="all">Все задачи</button>
+    </div>
+    
+    <form class="add-form" id="addForm">
+      <input type="text" id="taskInput" placeholder="Введите название задачи..." required>
+      <select id="weekSelect"></select>
+      <button type="submit">Добавить</button>
+    </form>
+
+    <div class="checkbox-row">
+      <label class="checkbox-label">
+        <input type="checkbox" id="bonusCheckbox">
+        <span>Бонусная задача</span>
+      </label>
+    </div>
+
+    <div class="filters" id="filters"></div>
+
+    <div class="weeks-container" id="weeksContainer"></div>
+    
+    <div class="stats" id="stats"></div>
+
+    <div class="week-settings">
+      <h3>Настройки</h3>
+      <div class="settings-row">
+        <label>Текущая неделя:</label>
+        <select id="currentWeekSetting"></select>
+      </div>
+      <div class="settings-row">
+        <label>Режим показа этапов:</label>
+        <select id="stepDisplayMode">
+          <option value="next">Только следующий этап</option>
+          <option value="all">Все этапы</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div class="modal-overlay" id="editModal">
+    <div class="modal">
+      <h3>Редактировать задачу</h3>
+      <div class="modal-field">
+        <label>Название</label>
+        <textarea id="editTaskName" rows="4"></textarea>
+      </div>
+      <div class="modal-field">
+        <label>Неделя</label>
+        <select id="editTaskWeek"></select>
+      </div>
+      <div class="modal-field">
+        <label class="modal-checkbox">
+          <input type="checkbox" id="editTaskBonus">
+          <span>Бонусная задача</span>
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-btn cancel" onclick="closeEditModal()">Отмена</button>
+        <button class="modal-btn save" onclick="saveEditedTask()">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'learning-tracker-tasks';
+    const WEEKS_KEY = 'learning-tracker-weeks';
+    const CURRENT_WEEK_KEY = 'learning-tracker-current-week';
+    const STEP_MODE_KEY = 'learning-tracker-step-mode';
+    const COLLAPSED_WEEKS_KEY = 'learning-tracker-collapsed-weeks';
+    
+    let tasks = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    let totalWeeks = parseInt(localStorage.getItem(WEEKS_KEY)) || 3;
+    let currentWeek = parseInt(localStorage.getItem(CURRENT_WEEK_KEY)) || 1;
+    let stepDisplayMode = localStorage.getItem(STEP_MODE_KEY) || 'next';
+    let collapsedWeeks = JSON.parse(localStorage.getItem(COLLAPSED_WEEKS_KEY)) || [];
+    let currentFilter = 'all';
+    let currentView = 'today';
+    let editingTaskId = null;
+    let draggedTaskId = null;
+
+    const addForm = document.getElementById('addForm');
+    const taskInput = document.getElementById('taskInput');
+    const weekSelect = document.getElementById('weekSelect');
+    const bonusCheckbox = document.getElementById('bonusCheckbox');
+    const weeksContainer = document.getElementById('weeksContainer');
+    const filters = document.getElementById('filters');
+    const stats = document.getElementById('stats');
+    const currentWeekBadge = document.getElementById('currentWeekBadge');
+    const currentWeekSetting = document.getElementById('currentWeekSetting');
+    const stepDisplayModeSelect = document.getElementById('stepDisplayMode');
+    const viewToggle = document.querySelector('.view-toggle');
+    const editModal = document.getElementById('editModal');
+
+    function saveTasks() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+    }
+
+    function saveWeeks() {
+      localStorage.setItem(WEEKS_KEY, totalWeeks.toString());
+    }
+
+    function saveCurrentWeek() {
+      localStorage.setItem(CURRENT_WEEK_KEY, currentWeek.toString());
+    }
+
+    function saveStepMode() {
+      localStorage.setItem(STEP_MODE_KEY, stepDisplayMode);
+    }
+
+    function saveCollapsedWeeks() {
+      localStorage.setItem(COLLAPSED_WEEKS_KEY, JSON.stringify(collapsedWeeks));
+    }
+
+    function renderWeekOptions() {
+      let options = '';
+      for (let i = 1; i <= totalWeeks; i++) {
+        options += `<option value="${i}">Неделя ${i}</option>`;
+      }
+      weekSelect.innerHTML = options;
+      document.getElementById('editTaskWeek').innerHTML = options;
+      
+      let settingOptions = '';
+      for (let i = 1; i <= totalWeeks; i++) {
+        settingOptions += `<option value="${i}" ${i === currentWeek ? 'selected' : ''}>Неделя ${i}</option>`;
+      }
+      currentWeekSetting.innerHTML = settingOptions;
+    }
+
+    function renderFilters() {
+      let html = '<button class="filter-btn active" data-week="all">Все</button>';
+      for (let i = 1; i <= totalWeeks; i++) {
+        html += `<button class="filter-btn" data-week="${i}">Неделя ${i}</button>`;
+      }
+      html += '<button class="add-week-btn" id="addWeekBtn">+ Неделя</button>';
+      filters.innerHTML = html;
+
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        if (btn.dataset.week === currentFilter) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+
+      document.getElementById('addWeekBtn').addEventListener('click', addWeek);
+    }
+
+    function addWeek() {
+      totalWeeks++;
+      saveWeeks();
+      renderWeekOptions();
+      renderFilters();
+      renderWeeks();
+    }
+
+    function getWeeksToShow() {
+      let weeks = [];
+      for (let i = 1; i <= totalWeeks; i++) {
+        weeks.push(i);
+      }
+
+      if (currentFilter !== 'all') {
+        weeks = weeks.filter(w => w === parseInt(currentFilter));
+      }
+
+      return weeks;
+    }
+
+    function getTasksForWeek(weekNum) {
+      let weekTasks = tasks.filter(t => t.week === weekNum.toString());
+      
+      if (currentView === 'today' && weekNum === currentWeek) {
+        // Show only undone tasks for current week in today view
+        weekTasks = weekTasks.filter(t => !t.done);
+      } else if (currentView === 'today' && weekNum !== currentWeek) {
+        return [];
+      }
+
+      return weekTasks;
+    }
+
+    function renderWeeks() {
+      const weeksToShow = getWeeksToShow();
+      let html = '';
+
+      weeksToShow.forEach(weekNum => {
+        const weekTasks = getTasksForWeek(weekNum);
+        const allWeekTasks = tasks.filter(t => t.week === weekNum.toString());
+        const completed = allWeekTasks.filter(t => t.done).length;
+        const total = allWeekTasks.length;
+        const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+        const isCollapsed = collapsedWeeks.includes(weekNum);
+        const isCurrent = weekNum === currentWeek;
+
+        if (currentView === 'today' && weekTasks.length === 0 && weekNum !== currentWeek) {
+          return;
+        }
+
+        html += `
+          <div class="week-card ${isCollapsed ? 'collapsed' : ''}" data-week="${weekNum}">
+            <div class="week-header" onclick="toggleWeekCollapse(${weekNum})">
+              <div class="week-title">
+                <span class="arrow">&#9660;</span>
+                <span>Неделя ${weekNum}${isCurrent ? ' (текущая)' : ''}</span>
+              </div>
+              <div class="week-progress">
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: ${progress}%"></div>
+                </div>
+                <span class="progress-text">${completed}/${total}</span>
+              </div>
+            </div>
+            <div class="week-tasks ${weekTasks.length > 0 ? 'has-tasks' : ''}">
+        `;
+
+        if (weekTasks.length === 0) {
+          html += `<div class="empty-state" style="padding: 24px;">Нет задач</div>`;
+        } else {
+          // Group sequential undone tasks
+          let currentStepFound = false;
+          weekTasks.forEach((task, index) => {
+            const isFirstUndone = !task.done && !currentStepFound;
+            if (isFirstUndone && stepDisplayMode === 'next') {
+              currentStepFound = true;
+            }
+            
+            const showAsCurrentStep = isFirstUndone && !task.done;
+            
+            if (stepDisplayMode === 'next' && !showAsCurrentStep && !task.done && currentStepFound) {
+              // Hide future steps in "next only" mode
+              return;
+            }
+            
+            html += renderTaskItem(task, showAsCurrentStep);
+          });
+        }
+
+        html += `</div></div>`;
+      });
+
+      if (html === '') {
+        html = `<div class="empty-state">
+          ${currentView === 'today' 
+            ? 'Все задачи на сегодня выполнены!' 
+            : 'Пока нет задач. Добавьте первую задачу выше.'}
+        </div>`;
+      }
+
+      weeksContainer.innerHTML = html;
+      initDragAndDrop();
+      renderStats();
+      currentWeekBadge.textContent = `Неделя ${currentWeek}`;
+    }
+
+    function toggleWeekCollapse(weekNum) {
+      const index = collapsedWeeks.indexOf(weekNum);
+      if (index > -1) {
+        collapsedWeeks.splice(index, 1);
+      } else {
+        collapsedWeeks.push(weekNum);
+      }
+      saveCollapsedWeeks();
+      renderWeeks();
+    }
+
+    function renderTaskItem(task, isCurrentStep) {
+      return `
+        <div class="task-item ${task.done ? 'done' : ''} ${task.bonus ? 'bonus' : ''} ${isCurrentStep ? 'current-step' : ''}" 
+             data-id="${task.id}" data-week="${task.week}" draggable="true">
+          <span class="drag-handle">&#8942;&#8942;</span>
+          <div class="task-checkbox ${task.done ? 'checked' : ''}" onclick="toggleTask('${task.id}')"></div>
+          <div class="task-content">
+            <span class="task-name">
+              ${escapeHtml(task.name)}
+              ${isCurrentStep ? '<span class="step-indicator">Следующий</span>' : ''}
+            </span>
+            <div class="task-badges">
+              ${task.bonus ? '<span class="bonus-badge">Бонус</span>' : ''}
+            </div>
+          </div>
+          <div class="task-actions">
+            <button class="task-btn" onclick="openEditModal('${task.id}')" title="Редактировать">&#9998;</button>
+            <button class="task-btn delete" onclick="deleteTask('${task.id}')" title="Удалить">&times;</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderStats() {
+      const total = tasks.length;
+      const completed = tasks.filter(t => t.done).length;
+      const bonusCount = tasks.filter(t => t.bonus).length;
+      
+      if (total === 0) {
+        stats.innerHTML = '';
+      } else {
+        stats.innerHTML = `
+          <span>Всего: ${total}</span>
+          <span>Выполнено: ${completed}</span>
+          <span>Осталось: ${total - completed}</span>
+          <span>Бонусных: ${bonusCount}</span>
+        `;
+      }
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function addTask(name, week, isBonus) {
+      const task = {
+        id: Date.now().toString(),
+        name: name.trim(),
+        week: week,
+        done: false,
+        bonus: isBonus
+      };
+
+      // Add to end of week's tasks
+      const lastWeekTaskIndex = tasks.map((t, i) => ({ t, i }))
+        .filter(({ t }) => t.week === week)
+        .pop();
+      
+      if (lastWeekTaskIndex) {
+        tasks.splice(lastWeekTaskIndex.i + 1, 0, task);
+      } else {
+        tasks.push(task);
+      }
+
+      saveTasks();
+      renderWeeks();
+    }
+
+    function toggleTask(id) {
+      const task = tasks.find(t => t.id === id);
+      if (task) {
+        task.done = !task.done;
+        saveTasks();
+        renderWeeks();
+      }
+    }
+
+    function deleteTask(id) {
+      tasks = tasks.filter(t => t.id !== id);
+      saveTasks();
+      renderWeeks();
+    }
+
+    function openEditModal(id) {
+      editingTaskId = id;
+      const task = tasks.find(t => t.id === id);
+      if (task) {
+        document.getElementById('editTaskName').value = task.name;
+        document.getElementById('editTaskWeek').value = task.week;
+        document.getElementById('editTaskBonus').checked = task.bonus;
+        editModal.classList.add('active');
+        document.getElementById('editTaskName').focus();
+      }
+    }
+
+    function closeEditModal() {
+      editModal.classList.remove('active');
+      editingTaskId = null;
+    }
+
+    function saveEditedTask() {
+      if (!editingTaskId) return;
+      
+      const task = tasks.find(t => t.id === editingTaskId);
+      if (task) {
+        const newWeek = document.getElementById('editTaskWeek').value;
+        const oldWeek = task.week;
+        
+        task.name = document.getElementById('editTaskName').value.trim();
+        task.week = newWeek;
+        task.bonus = document.getElementById('editTaskBonus').checked;
+        
+        // If week changed, move task to end of new week
+        if (oldWeek !== newWeek) {
+          tasks = tasks.filter(t => t.id !== editingTaskId);
+          const lastWeekTaskIndex = tasks.map((t, i) => ({ t, i }))
+            .filter(({ t }) => t.week === newWeek)
+            .pop();
+          
+          if (lastWeekTaskIndex) {
+            tasks.splice(lastWeekTaskIndex.i + 1, 0, task);
+          } else {
+            tasks.push(task);
+          }
+        }
+        
+        saveTasks();
+        renderWeeks();
+      }
+      closeEditModal();
+    }
+
+    // Drag and drop
+    function initDragAndDrop() {
+      const taskItems = document.querySelectorAll('.task-item[draggable="true"]');
+      
+      taskItems.forEach(item => {
+        item.addEventListener('dragstart', handleDragStart);
+        item.addEventListener('dragend', handleDragEnd);
+        item.addEventListener('dragover', handleDragOver);
+        item.addEventListener('drop', handleDrop);
+        item.addEventListener('dragleave', handleDragLeave);
+      });
+    }
+
+    function handleDragStart(e) {
+      draggedTaskId = e.target.dataset.id;
+      e.target.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    }
+
+    function handleDragEnd(e) {
+      e.target.classList.remove('dragging');
+      document.querySelectorAll('.task-item').forEach(item => {
+        item.classList.remove('drag-over');
+      });
+    }
+
+    function handleDragOver(e) {
+      e.preventDefault();
+      const target = e.target.closest('.task-item');
+      if (target && target.dataset.id !== draggedTaskId) {
+        document.querySelectorAll('.task-item').forEach(item => {
+          item.classList.remove('drag-over');
+        });
+        target.classList.add('drag-over');
+      }
+    }
+
+    function handleDragLeave(e) {
+      const target = e.target.closest('.task-item');
+      if (target && !target.contains(e.relatedTarget)) {
+        target.classList.remove('drag-over');
+      }
+    }
+
+    function handleDrop(e) {
+      e.preventDefault();
+      const target = e.target.closest('.task-item');
+      if (!target || target.dataset.id === draggedTaskId) return;
+
+      const targetId = target.dataset.id;
+      const draggedIndex = tasks.findIndex(t => t.id === draggedTaskId);
+      const targetIndex = tasks.findIndex(t => t.id === targetId);
+
+      if (draggedIndex === -1 || targetIndex === -1) return;
+
+      // Update week if dropping to different week
+      const targetWeek = target.dataset.week;
+      const draggedTask = tasks[draggedIndex];
+      draggedTask.week = targetWeek;
+
+      const [removed] = tasks.splice(draggedIndex, 1);
+      const newTargetIndex = tasks.findIndex(t => t.id === targetId);
+      tasks.splice(newTargetIndex, 0, removed);
+
+      saveTasks();
+      renderWeeks();
+    }
+
+    // Event listeners
+    addForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = taskInput.value;
+      const week = weekSelect.value;
+      const isBonus = bonusCheckbox.checked;
+      
+      if (name.trim()) {
+        addTask(name, week, isBonus);
+        taskInput.value = '';
+        bonusCheckbox.checked = false;
+        taskInput.focus();
+      }
+    });
+
+    filters.addEventListener('click', (e) => {
+      if (e.target.classList.contains('filter-btn')) {
+        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+        e.target.classList.add('active');
+        currentFilter = e.target.dataset.week;
+        renderWeeks();
+      }
+    });
+
+    viewToggle.addEventListener('click', (e) => {
+      if (e.target.classList.contains('view-btn')) {
+        document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
+        e.target.classList.add('active');
+        currentView = e.target.dataset.view;
+        renderWeeks();
+      }
+    });
+
+    currentWeekSetting.addEventListener('change', (e) => {
+      currentWeek = parseInt(e.target.value);
+      saveCurrentWeek();
+      renderWeeks();
+    });
+
+    stepDisplayModeSelect.addEventListener('change', (e) => {
+      stepDisplayMode = e.target.value;
+      saveStepMode();
+      renderWeeks();
+    });
+
+    stepDisplayModeSelect.value = stepDisplayMode;
+
+    editModal.addEventListener('click', (e) => {
+      if (e.target === editModal) {
+        closeEditModal();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && editModal.classList.contains('active')) {
+        closeEditModal();
+      }
+    });
+
+    // Initial render
+    renderWeekOptions();
+    renderFilters();
+    renderWeeks();
+  </script>
+</body>
+</html>
