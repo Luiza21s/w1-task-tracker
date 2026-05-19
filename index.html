@@ -664,6 +664,27 @@
       background: #333;
     }
 
+    .modal-btn.delete {
+      background: #e53935;
+      border: none;
+      color: #fff;
+    }
+
+    .modal-btn.delete:hover {
+      background: #c62828;
+    }
+
+    .modal-delete-text {
+      font-size: 14px;
+      line-height: 1.5;
+      color: #444;
+    }
+
+    .modal-delete-text strong {
+      font-weight: 600;
+      color: #1a1a1a;
+    }
+
     @media (max-width: 500px) {
       .add-form {
         flex-direction: column;
@@ -740,6 +761,18 @@
     </div>
   </div>
 
+  <!-- Delete confirmation modal -->
+  <div class="modal-overlay" id="deleteModal">
+    <div class="modal">
+      <h3>Удалить задачу?</h3>
+      <p class="modal-delete-text" id="deleteModalText"></p>
+      <div class="modal-actions">
+        <button class="modal-btn cancel" onclick="closeDeleteModal()">Отмена</button>
+        <button class="modal-btn delete" onclick="confirmDeleteTask()">Удалить</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Edit Modal -->
   <div class="modal-overlay" id="editModal">
     <div class="modal">
@@ -780,6 +813,7 @@
     let currentFilter = 'all';
     let currentView = 'today';
     let editingTaskId = null;
+    let deletingTaskId = null;
     let draggedTaskId = null;
 
     const addForm = document.getElementById('addForm');
@@ -794,6 +828,7 @@
     const stepDisplayModeSelect = document.getElementById('stepDisplayMode');
     const viewToggle = document.querySelector('.view-toggle');
     const editModal = document.getElementById('editModal');
+    const deleteModal = document.getElementById('deleteModal');
 
     function saveTasks() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
@@ -920,21 +955,21 @@
         if (weekTasks.length === 0) {
           html += `<div class="empty-state" style="padding: 24px;">Нет задач</div>`;
         } else {
-          // Group sequential undone tasks
           let currentStepFound = false;
-          weekTasks.forEach((task, index) => {
+          const useStepMode = currentView === 'today' && stepDisplayMode === 'next';
+
+          weekTasks.forEach((task) => {
             const isFirstUndone = !task.done && !currentStepFound;
-            if (isFirstUndone && stepDisplayMode === 'next') {
+            if (isFirstUndone && useStepMode) {
               currentStepFound = true;
             }
-            
-            const showAsCurrentStep = isFirstUndone && !task.done;
-            
-            if (stepDisplayMode === 'next' && !showAsCurrentStep && !task.done && currentStepFound) {
-              // Hide future steps in "next only" mode
+
+            const showAsCurrentStep = useStepMode && isFirstUndone && !task.done;
+
+            if (useStepMode && !showAsCurrentStep && !task.done && currentStepFound) {
               return;
             }
-            
+
             html += renderTaskItem(task, showAsCurrentStep);
           });
         }
@@ -984,7 +1019,7 @@
           </div>
           <div class="task-actions">
             <button class="task-btn" onclick="openEditModal('${task.id}')" title="Редактировать">&#9998;</button>
-            <button class="task-btn delete" onclick="deleteTask('${task.id}')" title="Удалить">&times;</button>
+            <button class="task-btn delete" onclick="openDeleteModal('${task.id}')" title="Удалить">&times;</button>
           </div>
         </div>
       `;
@@ -1046,9 +1081,28 @@
       }
     }
 
-    function deleteTask(id) {
-      tasks = tasks.filter(t => t.id !== id);
+    function openDeleteModal(id) {
+      const task = tasks.find(t => t.id === id);
+      if (!task) return;
+
+      deletingTaskId = id;
+      const preview = task.name.length > 80 ? task.name.slice(0, 80) + '…' : task.name;
+      document.getElementById('deleteModalText').innerHTML =
+        `Задача <strong>${escapeHtml(preview)}</strong> будет удалена без возможности восстановления.`;
+      deleteModal.classList.add('active');
+    }
+
+    function closeDeleteModal() {
+      deleteModal.classList.remove('active');
+      deletingTaskId = null;
+    }
+
+    function confirmDeleteTask() {
+      if (!deletingTaskId) return;
+
+      tasks = tasks.filter(t => t.id !== deletingTaskId);
       saveTasks();
+      closeDeleteModal();
       renderWeeks();
     }
 
@@ -1222,9 +1276,19 @@
       }
     });
 
+    deleteModal.addEventListener('click', (e) => {
+      if (e.target === deleteModal) {
+        closeDeleteModal();
+      }
+    });
+
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && editModal.classList.contains('active')) {
-        closeEditModal();
+      if (e.key === 'Escape') {
+        if (deleteModal.classList.contains('active')) {
+          closeDeleteModal();
+        } else if (editModal.classList.contains('active')) {
+          closeEditModal();
+        }
       }
     });
 
